@@ -1,6 +1,7 @@
 package com.fortune.project.service;
 
 import com.fortune.project.dto.request.CategoryCreateRequest;
+import com.fortune.project.dto.request.CategoryUpdateRequest;
 import com.fortune.project.dto.response.ApiResponse;
 import com.fortune.project.dto.response.CategoryResponse;
 import com.fortune.project.model.Category;
@@ -50,7 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public ApiResponse<CategoryResponse> updateCategory(Long id, Category category) {
+    public ApiResponse<CategoryResponse> updateCategory(Long id, CategoryUpdateRequest category) {
         Category updatedCategory = categories.stream()
                 .filter(c -> c.getCategoryId().equals(id))
                 .findFirst()

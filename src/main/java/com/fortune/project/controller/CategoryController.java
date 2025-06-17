@@ -1,6 +1,7 @@
 package com.fortune.project.controller;
 
 import com.fortune.project.dto.request.CategoryCreateRequest;
+import com.fortune.project.dto.request.CategoryUpdateRequest;
 import com.fortune.project.dto.response.ApiResponse;
 import com.fortune.project.dto.response.CategoryResponse;
 import com.fortune.project.model.Category;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -23,25 +25,25 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @GetMapping("/api/public/categories")
+    @GetMapping("/public/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories(){
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
-    @PostMapping("api/public/categories")
+    @PostMapping("/public/categories")
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(@RequestBody CategoryCreateRequest category){
         ApiResponse<CategoryResponse> response = categoryService.createCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @DeleteMapping("api/admin/categories/{id}")
+    @DeleteMapping("/admin/categories/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable Long id){
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("api/public/categories/{id}")
-    public ResponseEntity<String> updateCategory(@RequestBody Category category,
+    @PutMapping("/public/categories/{id}")
+    public ResponseEntity<String> updateCategory(@RequestBody CategoryUpdateRequest category,
                                                  @PathVariable Long id){
         categoryService.updateCategory(id, category);
         return  ResponseEntity.ok("Update category successfully");
