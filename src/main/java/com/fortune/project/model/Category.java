@@ -14,10 +14,13 @@ import lombok.Setter;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
+    @Column(name = "id")
     private Long categoryId;
 
-    @Column
+    @Column(name = "name")
     private String categoryName;
+
+    @Column(name = "description")
+    private String categoryDescription;
 
 }

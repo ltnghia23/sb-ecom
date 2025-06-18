@@ -15,4 +15,5 @@ public class CategoryCreateRequest {
     @NotBlank
     @Size(min = 5, message = "must contain at least 5 characters")
     private String categoryName;
+    private String categoryDescription;
 }

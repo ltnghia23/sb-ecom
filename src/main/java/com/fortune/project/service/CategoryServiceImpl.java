@@ -29,7 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (categories.isEmpty()) throw new ApiException("Have no category created till now", "Categories is empty");
         List<CategoryResponse> responses = categories
                 .stream()
-                .map(c -> new CategoryResponse(c.getCategoryId(), c.getCategoryName()))
+                .map(c -> new CategoryResponse(c.getCategoryId(), c.getCategoryName(), c.getCategoryDescription()))
                 .toList();
         return new ApiResponse<>("Categories fetched success", responses, LocalDateTime.now());
     }
@@ -43,9 +43,10 @@ public class CategoryServiceImpl implements CategoryService {
         }
         Category createdCategory = new Category();
         createdCategory.setCategoryName(category.getCategoryName());
+        createdCategory.setCategoryDescription(category.getCategoryDescription());
         Category saved = repo.save(createdCategory);
         return new ApiResponse<>("Category created",
-                new CategoryResponse(saved.getCategoryId(), saved.getCategoryName()),
+                new CategoryResponse(saved.getCategoryId(), saved.getCategoryName(), saved.getCategoryDescription()),
                 LocalDateTime.now());
     }
 
@@ -64,10 +65,11 @@ public class CategoryServiceImpl implements CategoryService {
         ;
 
         categoryToUpdate.setCategoryName(category.getCategoryName());
+        categoryToUpdate.setCategoryDescription(category.getCategoryDescription());
         Category updatedCategory = repo.save(categoryToUpdate);
         return new ApiResponse<>("Category updated successfully",
                 new CategoryResponse(updatedCategory.getCategoryId(),
-                        updatedCategory.getCategoryName()), LocalDateTime.now());
+                        updatedCategory.getCategoryName(), updatedCategory.getCategoryDescription()), LocalDateTime.now());
     }
 
 
