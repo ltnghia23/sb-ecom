@@ -1,4 +1,4 @@
-package com.fortune.project.dto;
+package com.fortune.project.dto.response;
 
 import java.time.LocalDateTime;
 
