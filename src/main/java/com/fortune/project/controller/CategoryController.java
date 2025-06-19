@@ -7,9 +7,14 @@ import com.fortune.project.dto.response.CategoryResponse;
 import com.fortune.project.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import static com.fortune.project.constants.PaginationConstant.*;
 
 @RestController
 @RequestMapping("/api")
@@ -23,8 +28,16 @@ public class CategoryController {
     }
 
     @GetMapping("/public/categories")
-    public ResponseEntity<?> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    public ResponseEntity<?> getAllCategories(
+            @RequestParam(defaultValue = DEFAULT_PAGE + "") Integer page,
+            @RequestParam(defaultValue = DEFAULT_SIZE + "") Integer size,
+            @RequestParam(defaultValue = DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = DEFAULT_SORT_DIR) String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(categoryService.getAllCategories(pageable));
     }
 
     @PostMapping("/public/categories")
@@ -35,8 +48,7 @@ public class CategoryController {
 
     @DeleteMapping("/admin/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(categoryService.deleteCategory(id));
     }
 
     @PutMapping("/public/categories/{id}")

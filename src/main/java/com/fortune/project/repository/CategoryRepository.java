@@ -1,8 +1,8 @@
 package com.fortune.project.repository;
 
-import com.fortune.project.model.Category;
+import com.fortune.project.Entity.CategoryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CategoryRepository extends JpaRepository<Category, Long> {
-    Category findByCategoryName(String categoryName);
+public interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
+    CategoryEntity findByCategoryName(String categoryName);
 }
