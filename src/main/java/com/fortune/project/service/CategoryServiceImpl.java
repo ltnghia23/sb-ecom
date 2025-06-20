@@ -1,11 +1,11 @@
 package com.fortune.project.service;
 
-import com.fortune.project.Entity.CategoryEntity;
-import com.fortune.project.dto.request.CategoryCreateRequest;
-import com.fortune.project.dto.request.CategoryUpdateRequest;
-import com.fortune.project.dto.response.ApiResponse;
-import com.fortune.project.dto.response.CategoryResponse;
-import com.fortune.project.dto.response.PagingResponse;
+import com.fortune.project.entity.CategoryEntity;
+import com.fortune.project.dto.request.category.CategoryCreateRequest;
+import com.fortune.project.dto.request.category.CategoryUpdateRequest;
+import com.fortune.project.dto.response.common.ApiResponse;
+import com.fortune.project.dto.response.category.CategoryResponse;
+import com.fortune.project.dto.response.common.PagingResponse;
 import com.fortune.project.exception.ApiException;
 import com.fortune.project.exception.ResourceNotFoundException;
 import com.fortune.project.repository.CategoryRepository;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -42,10 +41,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public ApiResponse<CategoryResponse> createCategory(CategoryCreateRequest category) {
-        CategoryEntity checkedCategoryEntity = repo.findByCategoryName(category.getCategoryName());
         if (repo.findByCategoryName(category.getCategoryName()) != null) {
             throw new ApiException("CategoryEntity with name %s already exist!!"
-                    .formatted(checkedCategoryEntity.getCategoryName()), "Duplicated category name");
+                    .formatted(category.getCategoryName()), "Duplicated category name");
         }
         CategoryEntity createdCategoryEntity = new CategoryEntity();
         createdCategoryEntity.setCategoryName(category.getCategoryName());

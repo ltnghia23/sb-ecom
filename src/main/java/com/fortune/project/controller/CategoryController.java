@@ -1,9 +1,9 @@
 package com.fortune.project.controller;
 
-import com.fortune.project.dto.request.CategoryCreateRequest;
-import com.fortune.project.dto.request.CategoryUpdateRequest;
-import com.fortune.project.dto.response.ApiResponse;
-import com.fortune.project.dto.response.CategoryResponse;
+import com.fortune.project.dto.request.category.CategoryCreateRequest;
+import com.fortune.project.dto.request.category.CategoryUpdateRequest;
+import com.fortune.project.dto.response.common.ApiResponse;
+import com.fortune.project.dto.response.category.CategoryResponse;
 import com.fortune.project.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import static com.fortune.project.constants.PaginationConstant.*;
+import static com.fortune.project.constant.CategoryConstant.*;
 
 @RestController
 @RequestMapping("/api")

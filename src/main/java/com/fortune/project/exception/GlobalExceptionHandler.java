@@ -1,6 +1,6 @@
 package com.fortune.project.exception;
 
-import com.fortune.project.dto.response.ApiErrorResponse;
+import com.fortune.project.dto.response.common.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
@@ -64,6 +65,17 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(apiErrorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException ex){
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Resource (API) not found",
+                "Cannot find the endpoint",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.NOT_FOUND);
     }
 
 }
