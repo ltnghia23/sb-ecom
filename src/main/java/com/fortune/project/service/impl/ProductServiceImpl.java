@@ -1,16 +1,20 @@
-package com.fortune.project.service;
+package com.fortune.project.service.impl;
 
 import com.fortune.project.constant.ProductConstant;
+import com.fortune.project.dto.request.order.OrderItemRequest;
 import com.fortune.project.dto.request.product.ProductRequest;
 import com.fortune.project.dto.response.common.ApiResponse;
 import com.fortune.project.dto.response.common.PagingResponse;
 import com.fortune.project.dto.response.product.ProductResponse;
 import com.fortune.project.entity.CategoryEntity;
+import com.fortune.project.entity.OrderEntity;
+import com.fortune.project.entity.OrderItemEntity;
 import com.fortune.project.entity.ProductEntity;
 import com.fortune.project.exception.ApiException;
 import com.fortune.project.exception.ResourceNotFoundException;
 import com.fortune.project.repository.CategoryRepository;
 import com.fortune.project.repository.ProductRepository;
+import com.fortune.project.service.ProductService;
 import com.fortune.project.service.filestorage.FileStorageService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +26,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -48,15 +54,15 @@ public class ProductServiceImpl implements ProductService {
                 ));
         boolean productExist = category.getProducts()
                 .stream()
-                .anyMatch(p -> p.getProductName().equals(request.getProductName()));
+                .anyMatch(p -> p.getName().equals(request.getProductName()));
 
         if (productExist) {
             throw new ApiException("Product with name " + request.getProductName() + " is already exist!", "Product existed!");
         }
         ProductEntity productToCreated = modelMapper.map(request, ProductEntity.class);
-        productToCreated.setProductImg(ProductConstant.DEFAULT_IMAGE);
+        productToCreated.setImg(ProductConstant.DEFAULT_IMAGE);
         productToCreated.setCategory(category);
-        productToCreated.setProductSpecialPrice(
+        productToCreated.setSpecialPrice(
                 request.getProductPrice() - (request.getProductDiscount() * 0.01) * request.getProductPrice());
         ProductEntity createdProduct = productRepository.save(productToCreated);
         return new ApiResponse<>("Product created",
@@ -78,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
         if (!categoryRepository.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category", "categoryId", categoryId);
         }
-        Page<ProductEntity> products = productRepository.findByCategory_categoryId(categoryId, pageable);
+        Page<ProductEntity> products = productRepository.findByCategory_id(categoryId, pageable);
         Page<ProductResponse> responses = products
                 .map(p -> modelMapper.map(p, ProductResponse.class));
         return new ApiResponse<>("All products with categoryId = " + categoryId + " fetched successfully",
@@ -88,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ApiResponse<PagingResponse<ProductResponse>> getAllProductsByKeyword(String keyword, Pageable pageable) {
-        Page<ProductEntity> products = productRepository.findByProductNameContainingIgnoreCase(keyword, pageable);
+        Page<ProductEntity> products = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
         Page<ProductResponse> responses = products
                 .map(p -> modelMapper.map(p, ProductResponse.class));
         return new ApiResponse<>("All products with keyword = " + keyword + " fetched successfully",
@@ -102,11 +108,11 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Product", "productId", productId
                 ));
-        productFound.setProductName(request.getProductName());
-        productFound.setProductDescription(request.getProductDescription());
-        productFound.setProductQuantity(request.getProductQuantity());
-        productFound.setProductPrice(request.getProductPrice());
-        productFound.setProductSpecialPrice(request.getProductPrice() - (request.getProductDiscount() * 0.01) * request.getProductPrice());
+        productFound.setName(request.getProductName());
+        productFound.setDescription(request.getProductDescription());
+        productFound.setStock(request.getStock());
+        productFound.setPrice(request.getProductPrice());
+        productFound.setSpecialPrice(request.getProductPrice() - (request.getProductDiscount() * 0.01) * request.getProductPrice());
         ProductEntity updatedProduct = productRepository.save(productFound);
         ProductResponse responses = modelMapper.map(updatedProduct, ProductResponse.class);
         return new ApiResponse<>("Product with productId = " + productId + " updated successfully",
@@ -135,11 +141,44 @@ public class ProductServiceImpl implements ProductService {
                 .path(fileName)
                 .toUriString();
 
-        foundedProduct.setProductImg(fullImageUrl);
+        foundedProduct.setImg(fullImageUrl);
 
         ProductEntity updatedProduct = productRepository.save(foundedProduct);
         ProductResponse responses = modelMapper.map(updatedProduct, ProductResponse.class);
         return new ApiResponse<>("Product image updated successfully", responses, LocalDateTime.now());
+    }
+
+    @Override
+    public ProductEntity findById(Long productId) {
+        return productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product","product id", productId));
+    }
+
+    @Override
+    public List<OrderItemEntity> buildOrderItems(List<OrderItemRequest> itemRequests, OrderEntity order) {
+        List<OrderItemEntity> orderItems = new ArrayList<>();
+
+        for (OrderItemRequest request : itemRequests) {
+            // Tìm sản phẩm
+            ProductEntity product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", request.getProductId()));
+
+            // Validate số lượng
+            if (request.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Số lượng phải > 0 cho sản phẩm: " + product.getName());
+            }
+
+            // Tạo OrderItemEntity
+            OrderItemEntity orderItem = new OrderItemEntity();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(request.getQuantity());
+            orderItem.setUnitPrice(product.getPrice());
+            orderItem.setTotalPrice(product.getPrice() * request.getQuantity());
+
+            orderItems.add(orderItem);
+        }
+
+        return orderItems;
     }
 
 

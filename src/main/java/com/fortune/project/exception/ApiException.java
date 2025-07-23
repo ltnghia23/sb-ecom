@@ -10,5 +10,9 @@ public class ApiException extends RuntimeException{
         super(message);
         this.error = error;
     }
+    public ApiException(String message) {
+        super(message);
+    }
+
 
 }

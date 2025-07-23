@@ -13,19 +13,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "categories")
-public class CategoryEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long categoryId;
+public class CategoryEntity extends BaseEntity{
 
     @Column(name = "name")
-    private String categoryName;
+    private String name;
 
     @Column(name = "description")
-    private String categoryDescription;
+    private String description;
 
     @OneToMany(mappedBy = "category")
     List<ProductEntity> products;
+
+    //parent category and child category if need
 
 }

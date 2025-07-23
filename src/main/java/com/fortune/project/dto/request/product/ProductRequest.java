@@ -13,8 +13,8 @@ public class ProductRequest {
     private String productName;
     @JsonProperty("description")
     private String productDescription;
-    @JsonProperty("quantity")
-    private Integer productQuantity;
+    @JsonProperty("stock")
+    private Integer stock;
     @JsonProperty("price")
     private double productPrice;
     @JsonProperty("discount")

@@ -1,4 +1,4 @@
-package com.fortune.project.service;
+package com.fortune.project.service.impl;
 
 import com.fortune.project.entity.CategoryEntity;
 import com.fortune.project.dto.request.category.CategoryCreateRequest;
@@ -9,6 +9,7 @@ import com.fortune.project.dto.response.common.PagingResponse;
 import com.fortune.project.exception.ApiException;
 import com.fortune.project.exception.ResourceNotFoundException;
 import com.fortune.project.repository.CategoryRepository;
+import com.fortune.project.service.CategoryService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,13 +42,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public ApiResponse<CategoryResponse> createCategory(CategoryCreateRequest category) {
-        if (repo.findByCategoryName(category.getCategoryName()) != null) {
+        if (repo.findByName(category.getCategoryName()) != null) {
             throw new ApiException("CategoryEntity with name %s already exist!!"
                     .formatted(category.getCategoryName()), "Duplicated category name");
         }
         CategoryEntity createdCategoryEntity = new CategoryEntity();
-        createdCategoryEntity.setCategoryName(category.getCategoryName());
-        createdCategoryEntity.setCategoryDescription(category.getCategoryDescription());
+        createdCategoryEntity.setName(category.getCategoryName());
+        createdCategoryEntity.setDescription(category.getCategoryDescription());
         CategoryEntity saved = repo.save(createdCategoryEntity);
         return new ApiResponse<>("CategoryEntity created",
                 modelMapper.map(saved, CategoryResponse.class),
@@ -70,8 +71,8 @@ public class CategoryServiceImpl implements CategoryService {
                 new ResourceNotFoundException(
                         "CategoryEntity", "categoryId", id));
         ;
-        categoryEntityToUpdate.setCategoryName(category.getCategoryName());
-        categoryEntityToUpdate.setCategoryDescription(category.getCategoryDescription());
+        categoryEntityToUpdate.setName(category.getCategoryName());
+        categoryEntityToUpdate.setDescription(category.getCategoryDescription());
         CategoryEntity updatedCategoryEntity = repo.save(categoryEntityToUpdate);
         return new ApiResponse<>("CategoryEntity updated successfully",
                 modelMapper.map(updatedCategoryEntity, CategoryResponse.class)

@@ -1,8 +1,14 @@
 package com.fortune.project.dto.response.common;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 public class ApiErrorResponse {
+    // Getters and setters
     private int status;
     private String error;
     private String message;
@@ -15,16 +21,4 @@ public class ApiErrorResponse {
         this.timestamp = timestamp;
     }
 
-    // Getters and setters
-    public int getStatus() { return status; }
-    public void setStatus(int status) { this.status = status; }
-
-    public String getError() { return error; }
-    public void setError(String error) { this.error = error; }
-
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

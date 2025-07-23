@@ -3,28 +3,37 @@ package com.fortune.project.config;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.List;
+import java.util.Optional;
 
 @Configuration
 public class AppConfig implements WebMvcConfigurer {
     @Bean
     public ModelMapper modelMapper(){
-        return new ModelMapper();
+        ModelMapper mapper = new ModelMapper();
+        mapper.getConfiguration().setSkipNullEnabled(true);
+        return mapper;
     }
 
-//    @Override
-//    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers){
-//        PageableHandlerMethodArgumentResolver resolver = new PageableHandlerMethodArgumentResolver();
-//        resolver.setPageParameterName("page");
-//        resolver.setSizeParameterName("limit");
-//
-//        //default
-//        resolver.setFallbackPageable(PageRequest.of(0, 5)); // page = 0, limit = 10
-//        resolvers.add(resolver);
-//    }
+
+    @Bean
+    public AuditorAware<String> auditorProvider() {
+//        return () -> Optional.ofNullable("system_user"); // hoặc lấy từ SecurityContext
+//        return () -> Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication().getName());
+        return () -> {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || !authentication.isAuthenticated()
+                    || authentication.getPrincipal().equals("anonymousUser")) {
+                // fallback nếu chưa login hoặc anonymous
+                return Optional.of("SYSTEM");
+            }
+
+            return Optional.ofNullable(authentication.getName());
+        };
+    }
 }

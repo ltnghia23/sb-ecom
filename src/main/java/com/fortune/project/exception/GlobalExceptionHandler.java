@@ -3,6 +3,7 @@ package com.fortune.project.exception;
 import com.fortune.project.dto.response.common.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -72,10 +73,30 @@ public class GlobalExceptionHandler {
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "Resource (API) not found",
-                "Cannot find the endpoint",
+                ex.getMessage(),
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(apiErrorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+        ApiErrorResponse errorResponse = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Authentication failed",
+                "Invalid username or password",
+                LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex){
+        ApiErrorResponse errorResponse = new ApiErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Cannot signup",
+                ex.getMessage(),
+                LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
 }

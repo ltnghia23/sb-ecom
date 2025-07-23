@@ -29,10 +29,10 @@ public class CategoryController {
 
     @GetMapping("/public/categories")
     public ResponseEntity<?> getAllCategories(
-            @RequestParam(defaultValue = DEFAULT_PAGE + "") Integer page,
-            @RequestParam(defaultValue = DEFAULT_SIZE + "") Integer size,
-            @RequestParam(defaultValue = DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = DEFAULT_SORT_DIR) String sortDir
+            @RequestParam(defaultValue = DEFAULT_PAGE + "", required = false) Integer page,
+            @RequestParam(defaultValue = DEFAULT_SIZE + "", required = false) Integer size,
+            @RequestParam(defaultValue = DEFAULT_SORT_BY, required = false) String sortBy,
+            @RequestParam(defaultValue = DEFAULT_SORT_DIR, required = false) String sortDir
     ) {
         Sort sort = sortDir.equalsIgnoreCase("desc") ?
                 Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
