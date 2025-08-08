@@ -28,13 +28,13 @@ public class OrderEntity extends BaseEntity{
     @JoinColumn(name = "address_id")
     private AddressEntity address;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false)
     private Double subtotal;
 
-    @Column(precision = 10, scale = 2)
+    @Column
     private Double shippingFee;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false)
     private Double total;
 
     @Enumerated(EnumType.STRING)

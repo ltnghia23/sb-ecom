@@ -28,7 +28,6 @@ public class PaymentController {
 //        paymentService.handleGatewayCallback(request.getTransactionId(), request.isSuccess());
 //        return ResponseEntity.ok().build();
 //    }
-
     @GetMapping("/vnpay-return")
     public ResponseEntity<String> handleVnpayReturn(HttpServletRequest request) {
         Map<String, String> vnpParams = extractVnpParams(request);
@@ -40,10 +39,10 @@ public class PaymentController {
 
             if ("00".equals(txnStatus)) {
                 paymentService.handleGatewayCallback(paymentId, true);
-                return ResponseEntity.ok("Thanh toán thành công");
+                return ResponseEntity.ok("Payment success");
             } else {
                 paymentService.handleGatewayCallback(paymentId, false);
-                return ResponseEntity.ok("Thanh toán thất bại");
+                return ResponseEntity.ok("Payment failed");
             }
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Checksum không hợp lệ");

@@ -11,10 +11,8 @@ import com.fortune.project.repository.OrderRepository;
 import com.fortune.project.service.*;
 import com.fortune.project.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,7 +23,6 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentService paymentService;
     private final ProductService productService;
     private final AddressService addressService;
-    private final UserService userService;
     private final AuthUtil authUtil;
     private final ShipmentService shipmentService;
 

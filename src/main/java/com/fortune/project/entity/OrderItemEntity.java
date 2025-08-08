@@ -27,9 +27,9 @@ public class OrderItemEntity extends BaseEntity{
     @Column(nullable = false)
     private int quantity;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column
     private Double unitPrice;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column
     private Double totalPrice;
 }

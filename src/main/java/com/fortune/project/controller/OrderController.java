@@ -2,18 +2,14 @@ package com.fortune.project.controller;
 
 import com.fortune.project.dto.request.order.CreateOrderRequest;
 import com.fortune.project.dto.request.order.OrderResponse;
-import com.fortune.project.entity.UserEntity;
-import com.fortune.project.repository.UserRepository;
 import com.fortune.project.security.service.UserDetailsImpl;
 import com.fortune.project.service.OrderService;
-import com.fortune.project.util.AuthUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

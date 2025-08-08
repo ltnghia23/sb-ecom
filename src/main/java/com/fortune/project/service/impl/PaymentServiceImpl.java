@@ -30,8 +30,8 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
 
         if (method == PaymentMethod.CASH_ON_DELIVERY) {
-            payment.setStatus(PaymentStatus.SUCCESS);
-            order.setStatus(OrderStatus.PAID);
+            payment.setStatus(PaymentStatus.PROCESSING);
+            order.setStatus(OrderStatus.PENDING);
             paymentRepository.save(payment);
             return PaymentResponse.from(payment);
         }

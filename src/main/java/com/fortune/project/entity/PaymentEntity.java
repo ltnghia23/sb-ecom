@@ -23,7 +23,7 @@ public class PaymentEntity extends BaseEntity{
     @Column(nullable = false)
     private PaymentMethod method;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column
     private Double amount;
 
     @Enumerated(EnumType.STRING)
