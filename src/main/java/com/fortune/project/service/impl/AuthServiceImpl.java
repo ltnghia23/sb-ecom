@@ -4,34 +4,35 @@ import com.fortune.project.dto.response.common.ApiResponse;
 import com.fortune.project.entity.AppRole;
 import com.fortune.project.entity.RoleEntity;
 import com.fortune.project.entity.UserEntity;
+import com.fortune.project.exception.ApiException;
 import com.fortune.project.exception.EmailAlreadyExistsException;
+import com.fortune.project.exception.ResourceNotFoundException;
 import com.fortune.project.repository.RoleRepository;
 import com.fortune.project.repository.UserRepository;
+import com.fortune.project.security.dto.AuthResponse;
 import com.fortune.project.security.dto.LoginRequest;
 import com.fortune.project.security.dto.SignUpRequest;
-import com.fortune.project.security.dto.UserInfoResponse;
-import com.fortune.project.security.jwt.JwtUtils;
+import com.fortune.project.security.jwt.JwtService;
 import com.fortune.project.security.service.UserDetailsImpl;
 import com.fortune.project.service.AuthService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -40,39 +41,39 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
-    private final JwtUtils jwtUtils;
+    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
 
+    @Value("${app.jwt.refresh-cookie-name}")
+    private String refreshCookieName;
+    @Value("${app.jwt.refresh-token-ttl}")
+    private long refreshTtl;
+    @Value("${app.jwt.refresh-cookie-domain}")
+    private String cookieDomain;
+    @Value("${app.jwt.refresh-cookie-secure}")
+    private boolean cookieSecure;
+    @Value("${app.jwt.refresh-cookie-samesite}")
+    private String cookieSameSite; // Strict/Lax/None
+
     @Override
-    public ResponseEntity<ApiResponse<UserInfoResponse>> authenticateUser(LoginRequest loginRequest) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
-                            loginRequest.getPassword())
-            );
+    public ResponseEntity<AuthResponse> authenticateUser(LoginRequest loginRequest, HttpServletResponse res) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword())
+        );
 
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+        UserDetailsImpl principal = (UserDetailsImpl) authentication.getPrincipal();
+        var roles = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).toArray(String[]::new);
 
-            List<String> roles = userDetails.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .toList();
+        String access = jwtService.generateAccessToken(principal.getUsername(), roles);
+        String refresh = jwtService.generateRefreshToken(principal.getUsername(), UUID.randomUUID().toString());
 
-            UserInfoResponse response = new UserInfoResponse(
-                    userDetails.getId(),
-                    userDetails.getUsername(),
-                    roles,
-                    jwtCookie.toString()
-            );
+        setRefreshCookie(res, refresh, refreshTtl);
+        long expiresIn = Duration.ofSeconds(900).toSeconds();
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-                    .body(new ApiResponse<>("Authenticated successfully", response, LocalDateTime.now()));
-        } catch (AuthenticationException ex) {
-            throw new BadCredentialsException("Invalid username or password", ex);
-        }
+        return ResponseEntity.ok(new AuthResponse(access, expiresIn));
     }
 
     @Override
@@ -91,24 +92,24 @@ public class AuthServiceImpl implements AuthService {
         Set<RoleEntity> roles = new HashSet<>();
 
         if (strRoles == null) {
-            RoleEntity userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+            RoleEntity userRole = roleRepository.findByRoleName(AppRole.USER)
                     .orElseThrow(() -> new RuntimeException("Role not found"));
             roles.add(userRole);
         } else {
             strRoles.forEach(role -> {
                 switch (role) {
                     case "admin" -> {
-                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.ADMIN)
                                 .orElseThrow(() -> new RuntimeException("Role not found"));
                         roles.add(adminRole);
                     }
                     case "user" -> {
-                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.USER)
                                 .orElseThrow(() -> new RuntimeException("Role not found"));
                         roles.add(adminRole);
                     }
                     case "seller" -> {
-                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.ROLE_SELLER)
+                        RoleEntity adminRole = roleRepository.findByRoleName(AppRole.SELLER)
                                 .orElseThrow(() -> new RuntimeException("Role not found"));
                         roles.add(adminRole);
                     }
@@ -119,6 +120,52 @@ public class AuthServiceImpl implements AuthService {
         user.setRoles(roles);
         UserEntity userSaved = userRepository.save(user);
         return new ApiResponse<>("Created user success", userSaved, LocalDateTime.now());
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshToken, HttpServletResponse res) {
+        if (refreshToken == null) {
+            throw new ApiException("Missing refresh token");
+        }
+
+        var jws = jwtService.parse(refreshToken);
+        if (!"refresh".equals(jws.getPayload().get("token_type", String.class))) {
+            throw new ApiException("Wrong token Type");
+        }
+
+        String username = jws.getPayload().getSubject();
+        var user = userRepository.findByName(username).orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+        var roles = user.getRoles().toArray(new String[0]);
+        String access = jwtService.generateAccessToken(username, roles);
+        // tuỳ chọn: rotate refresh token mỗi lần gọi
+        String newRefresh = jwtService.generateRefreshToken(username, UUID.randomUUID().toString());
+        setRefreshCookie(res, newRefresh, refreshTtl);
+        return new AuthResponse(access, 900);
+    }
+
+    @Override
+    public ApiResponse<?> logout(HttpServletResponse res) {
+        // Xoá cookie refresh
+        Cookie cookie = new Cookie(refreshCookieName, "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(cookieSecure);
+        cookie.setPath("/api/auth/refresh");
+        cookie.setMaxAge(0);
+        cookie.setDomain(cookieDomain);
+        res.addCookie(cookie);
+        return new ApiResponse<>(null, "Logged out", LocalDateTime.now());
+    }
+
+    private void setRefreshCookie(HttpServletResponse res, String value, long ttlSeconds) {
+        Cookie cookie = new Cookie(refreshCookieName, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(cookieSecure);
+        cookie.setPath("/api/auth/refresh");
+        cookie.setMaxAge((int) ttlSeconds);
+        if (cookieDomain != null && !cookieDomain.isBlank()) cookie.setDomain(cookieDomain);
+        // Spring không có setter SameSite trên Cookie; thêm header thủ công:
+        res.addHeader("Set-Cookie", String.format("%s=%s; Max-Age=%d; Path=/api/auth/refresh; Domain=%s; HttpOnly; Secure; SameSite=%s",
+                refreshCookieName, value, ttlSeconds, cookieDomain, cookieSameSite));
     }
 
 

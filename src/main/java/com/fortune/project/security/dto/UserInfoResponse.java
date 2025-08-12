@@ -12,13 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserInfoResponse {
-    private Long id;
     private String username;
     private List<String> roles;
     private String jwtToken;
 
-    public UserInfoResponse(Long id, String username, List<String> roles) {
-        this.id = id;
+    public UserInfoResponse(String username, List<String> roles) {
         this.username = username;
         this.roles = roles;
     }

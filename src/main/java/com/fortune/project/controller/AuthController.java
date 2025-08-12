@@ -1,16 +1,15 @@
 package com.fortune.project.controller;
 
 import com.fortune.project.dto.response.common.ApiResponse;
+import com.fortune.project.security.dto.AuthResponse;
 import com.fortune.project.security.dto.LoginRequest;
 import com.fortune.project.security.dto.SignUpRequest;
 import com.fortune.project.security.dto.UserInfoResponse;
-import com.fortune.project.security.jwt.JwtUtils;
 import com.fortune.project.security.service.UserDetailsImpl;
 import com.fortune.project.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,15 +20,26 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final JwtUtils jwtUtils;
     private final AuthService authService;
 
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        return authService.authenticateUser(loginRequest);
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse res) {
+        return authService.authenticateUser(loginRequest, res);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(
+            @CookieValue(name = "${app.jwt.refresh-cookie-name}", required = false) String refreshToken,
+            HttpServletResponse res) {
+        AuthResponse response = authService.refreshToken(refreshToken, res);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
     }
 
     @PostMapping("/signup")
@@ -55,7 +65,6 @@ public class AuthController {
                 .toList();
 
         UserInfoResponse response = new UserInfoResponse(
-                userDetails.getId(),
                 userDetails.getUsername(),
                 roles);
 
@@ -63,11 +72,9 @@ public class AuthController {
     }
 
     @PostMapping("/signout")
-    public ResponseEntity<?> signOutUser(){
-        ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new ApiResponse<>("Signed out", null, LocalDateTime.now()));
+    public ResponseEntity<?> signOutUser(HttpServletResponse res) {
+        ApiResponse<?> response = authService.logout(res);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

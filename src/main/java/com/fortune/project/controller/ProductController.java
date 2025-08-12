@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static com.fortune.project.constant.AppConstant.DEFAULT_SORT_BY_ID;
 import static com.fortune.project.constant.ProductConstant.*;
 
 @RestController
@@ -37,7 +38,7 @@ public class ProductController {
     public ResponseEntity<?> getAllProducts(
             @RequestParam(name = "pageNumber", defaultValue = DEFAULT_PAGE + "", required = false) Integer page,
             @RequestParam(name = "pageSize", defaultValue = DEFAULT_SIZE + "", required = false) Integer size,
-            @RequestParam(name = "sortBy", defaultValue = DEFAULT_SORT_BY, required = false) String sortBy,
+            @RequestParam(name = "sortBy", defaultValue = DEFAULT_SORT_BY_ID, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = DEFAULT_SORT_DIR, required = false) String sortDir
     ) {
         Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, sortDir);
